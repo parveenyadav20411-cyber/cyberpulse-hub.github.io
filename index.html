@@ -58,7 +58,6 @@
       display: flex;
       flex-direction: column;
       gap: 15px;
-      padding-bottom: 25px;
     }
     .brand-header {
       text-align: center;
@@ -185,45 +184,6 @@
     .hidden {
       display: none;
     }
-
-    .creator-footer {
-      background: rgba(4, 18, 10, 0.85);
-      border: 1px dashed var(--neon-green);
-      border-radius: 14px;
-      padding: 16px;
-      text-align: center;
-      margin-top: 10px;
-    }
-    .creator-footer h3 {
-      font-size: 1.05rem;
-      color: var(--neon-green);
-      margin-bottom: 6px;
-    }
-    .creator-footer p {
-      font-size: 0.85rem;
-      color: #9cb8a9;
-      line-height: 1.4;
-      margin-bottom: 12px;
-    }
-    .insta-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 10px 20px;
-      border-radius: 25px;
-      text-decoration: none;
-      font-weight: 700;
-      font-size: 0.9rem;
-      background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888);
-      color: #fff;
-      box-shadow: 0 0 15px rgba(220, 39, 67, 0.4);
-      transition: 0.2s;
-    }
-    .support-note {
-      font-size: 0.75rem;
-      color: #638a74;
-      margin-top: 10px;
-    }
   </style>
 </head>
 <body>
@@ -292,26 +252,12 @@
         <button class="tab-btn active" style="flex:0; padding:10px 15px;" onclick="askAI()">Batao</button>
       </div>
     </div>
-
-    <!-- Creator Section -->
-    <div class="creator-footer">
-      <h3>Created & Developed by Parveen Yadav ⚡</h3>
-      <p>Agar website achi lagi toh follow zaroor karein! Kuch problem aaye toh Instagram par DM karein.</p>
-      
-      <a href="https://instagram.com/parveen_yadav" target="_blank" class="insta-btn">
-        📸 Follow on Instagram & DM
-      </a>
-      
-      <div class="support-note">
-        💡 24/7 Support: Koi dikkat aane par Instagram par DM karein, instant reply milega!
-      </div>
-    </div>
   </div>
 
   <script>
     // Screen Tap Spider Web Effect
     document.addEventListener('click', (e) => {
-      if (['BUTTON', 'INPUT', 'A'].includes(e.target.tagName)) return;
+      if (['BUTTON', 'INPUT'].includes(e.target.tagName)) return;
       const web = document.createElement('div');
       web.className = 'web-shooter';
       web.innerText = '🕸️';
