@@ -1,540 +1,152 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Smart 3D Body & Diet Planner</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    }
-    body {
-      background: radial-gradient(circle at top, #0f172a, #020617 90%);
-      color: #f1f5f9;
-      min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      padding: 16px;
-    }
-    .app-card {
-      width: 100%;
-      max-width: 480px;
-      background: rgba(15, 23, 42, 0.88);
-      backdrop-filter: blur(24px);
-      -webkit-backdrop-filter: blur(24px);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 28px;
-      padding: 20px;
-      box-shadow: 0 25px 60px -12px rgba(0, 0, 0, 0.8);
-    }
-    .header {
-      text-align: center;
-      margin-bottom: 12px;
-    }
-    .header h1 {
-      font-size: 1.5rem;
-      font-weight: 800;
-      color: #38bdf8;
-      letter-spacing: -0.5px;
-    }
-    .header p {
-      font-size: 0.78rem;
-      color: #94a3b8;
-    }
-
-    .viewport-container {
-      width: 100%;
-      height: 290px;
-      background: radial-gradient(circle at 50% 30%, #1e293b 0%, #020617 100%);
-      border-radius: 20px;
-      border: 1px solid rgba(56, 189, 248, 0.25);
-      position: relative;
-      overflow: hidden;
-      margin-bottom: 14px;
-    }
-    #threeCanvas {
-      width: 100%;
-      height: 100%;
-      display: block;
-      cursor: grab;
-    }
-    #threeCanvas:active {
-      cursor: grabbing;
-    }
-    .rotate-hint {
-      position: absolute;
-      bottom: 8px;
-      left: 50%;
-      transform: translateX(-50%);
-      font-size: 0.7rem;
-      color: #94a3b8;
-      background: rgba(15, 23, 42, 0.85);
-      padding: 3px 12px;
-      border-radius: 12px;
-      pointer-events: none;
-      border: 1px solid rgba(255, 255, 255, 0.08);
-    }
-    .loading-msg {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      font-size: 0.8rem;
-      color: #38bdf8;
-      font-weight: 700;
-      letter-spacing: 0.5px;
-      pointer-events: none;
-    }
-
-    .input-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      gap: 8px;
-      margin-bottom: 12px;
-    }
-    .input-group {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-    .input-group label {
-      font-size: 0.75rem;
-      font-weight: 600;
-      color: #cbd5e1;
-    }
-    .input-wrap {
-      position: relative;
-      display: flex;
-      align-items: center;
-    }
-    .input-wrap input {
-      width: 100%;
-      background: rgba(15, 23, 42, 0.95);
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      border-radius: 10px;
-      padding: 9px 30px 9px 10px;
-      color: #fff;
-      font-size: 0.9rem;
-      font-weight: 700;
-      outline: none;
-    }
-    .input-wrap input:focus {
-      border-color: #38bdf8;
-    }
-    .input-unit {
-      position: absolute;
-      right: 8px;
-      font-size: 0.65rem;
-      font-weight: 700;
-      color: #64748b;
-    }
-
-    .goal-select-box {
-      margin-bottom: 14px;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-    .goal-select-box label {
-      font-size: 0.75rem;
-      font-weight: 600;
-      color: #cbd5e1;
-    }
-    select {
-      width: 100%;
-      background: rgba(15, 23, 42, 0.95);
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      border-radius: 10px;
-      padding: 9px 12px;
-      color: #38bdf8;
-      font-size: 0.85rem;
-      font-weight: 700;
-      outline: none;
-    }
-
-    .calc-btn {
-      width: 100%;
-      background: linear-gradient(135deg, #0284c7, #2563eb);
-      color: #fff;
-      border: none;
-      padding: 12px;
-      border-radius: 12px;
-      font-size: 0.95rem;
-      font-weight: 700;
-      cursor: pointer;
-      box-shadow: 0 8px 20px -4px rgba(37, 99, 235, 0.5);
-      transition: transform 0.1s;
-    }
-    .calc-btn:active {
-      transform: scale(0.98);
-    }
-
-    .diet-cards-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-      margin-top: 14px;
-    }
-    .metric-card {
-      background: rgba(15, 23, 42, 0.85);
-      border-radius: 14px;
-      padding: 12px;
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      text-align: center;
-    }
-    .metric-title {
-      font-size: 0.7rem;
-      font-weight: 700;
-      color: #94a3b8;
-      text-transform: uppercase;
-    }
-    .metric-val {
-      font-size: 1.5rem;
-      font-weight: 900;
-      margin: 2px 0;
-    }
-    .metric-desc {
-      font-size: 0.7rem;
-      color: #64748b;
-    }
-
-    .bmi-card {
-      margin-top: 10px;
-      background: rgba(15, 23, 42, 0.7);
-      border-radius: 14px;
-      padding: 10px 14px;
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .credits {
-      text-align: center;
-      font-size: 0.7rem;
-      color: #64748b;
-      margin-top: 14px;
-    }
-  </style>
-</head>
-<body>
-
-  <div class="app-card">
-    <div class="header">
-      <h1>3D Body & Diet Planner</h1>
-      <p>Body Simulation, BMI, Calories & Protein Target</p>
-    </div>
-
-    <div class="viewport-container">
-      <div id="threeCanvas"></div>
-      <div id="loadingText" class="loading-msg">Loading Realistic 3D Physique...</div>
-      <div class="rotate-hint">🔄 Ungli se ghumayein (Rotate 3D)</div>
-    </div>
-
-    <div class="input-grid">
-      <div class="input-group">
-        <label>Height</label>
-        <div class="input-wrap">
-          <input type="number" id="heightInput" value="178" inputmode="decimal">
-          <span class="input-unit">CM</span>
-        </div>
-      </div>
-
-      <div class="input-group">
-        <label>Weight</label>
-        <div class="input-wrap">
-          <input type="number" id="weightInput" value="55" inputmode="decimal">
-          <span class="input-unit">KG</span>
-        </div>
-      </div>
-
-      <div class="input-group">
-        <label>Age</label>
-        <div class="input-wrap">
-          <input type="number" id="ageInput" value="17" inputmode="numeric">
-          <span class="input-unit">YRS</span>
-        </div>
-      </div>
-    </div>
-
-    <div class="goal-select-box">
-      <label>Fitness Target / Goal</label>
-      <select id="goalInput" onchange="calculateAll()">
-        <option value="gain" selected>Muscle Building / Weight Gain (Bulking)</option>
-        <option value="maintain">Maintain Current Weight</option>
-        <option value="lose">Fat Loss / Weight Loss (Cutting)</option>
-      </select>
-    </div>
-
-    <button type="button" class="calc-btn" onclick="calculateAll()">Calculate Diet & Transform 3D Avatar</button>
-
-    <div class="diet-cards-grid">
-      <div class="metric-card" style="border-top: 2px solid #f59e0b;">
-        <div class="metric-title">🔥 Daily Calories</div>
-        <div id="calScore" class="metric-val" style="color: #f59e0b;">2536</div>
-        <div class="metric-desc">kcal har din lena hai</div>
-      </div>
-
-      <div class="metric-card" style="border-top: 2px solid #10b981;">
-        <div class="metric-title">🥩 Daily Protein</div>
-        <div id="proScore" class="metric-val" style="color: #10b981;">110g</div>
-        <div class="metric-desc">gram protein daily target</div>
-      </div>
-    </div>
-
-    <div class="bmi-card">
-      <div>
-        <div style="font-size: 0.7rem; color: #94a3b8; font-weight: 700;">BMI INDEX</div>
-        <div id="bmiScoreText" style="font-size: 1.2rem; font-weight: 900; color: #38bdf8;">17.4</div>
-      </div>
-      <div id="bmiStatusText" style="font-size: 0.85rem; font-weight: 800; color: #38bdf8; text-transform: uppercase;">
-        Underweight
-      </div>
-    </div>
-
-    <div class="credits">
-      Designed & Developed by Parveen Yadav
-    </div>
-  </div>
-
-  <script>
-    let scene, camera, renderer, humanModel = null;
-    let mannequinMaterial;
-    let isDragging = false, prevMouseX = 0;
-
-    function init3D() {
-      const container = document.getElementById('threeCanvas');
-      const w = container.clientWidth || 400;
-      const h = container.clientHeight || 290;
-
-      scene = new THREE.Scene();
-      camera = new THREE.PerspectiveCamera(40, w / h, 0.1, 100);
-      camera.position.set(0, 0.35, 3.8);
-
-      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-      renderer.setSize(w, h);
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-      container.appendChild(renderer.domElement);
-
-      // Studio Lighting
-      const ambLight = new THREE.AmbientLight(0xffffff, 0.8);
-      scene.add(ambLight);
-
-      const keyLight = new THREE.DirectionalLight(0x38bdf8, 1.6);
-      keyLight.position.set(2, 4, 3);
-      scene.add(keyLight);
-
-      const rimLight = new THREE.DirectionalLight(0xffffff, 0.7);
-      rimLight.position.set(-3, 2, -2);
-      scene.add(rimLight);
-
-      // Circular Scanner Platform
-      const pedestalGeo = new THREE.CylinderGeometry(1.1, 1.2, 0.08, 36);
-      const pedestalMat = new THREE.MeshStandardMaterial({
-        color: 0x0f172a,
-        metalness: 0.7,
-        roughness: 0.3
-      });
-      const pedestal = new THREE.Mesh(pedestalGeo, pedestalMat);
-      pedestal.position.y = -1.15;
-      scene.add(pedestal);
-
-      const ringGeo = new THREE.RingGeometry(0.95, 1.05, 36);
-      const ringMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8, side: THREE.DoubleSide });
-      const ring = new THREE.Mesh(ringGeo, ringMat);
-      ring.rotation.x = Math.PI / 2;
-      ring.position.y = -1.1;
-      scene.add(ring);
-
-      mannequinMaterial = new THREE.MeshStandardMaterial({
-        color: 0x38bdf8,
-        metalness: 0.45,
-        roughness: 0.35
-      });
-
-      // Load Anatomically Correct Human Mannequin (GLTF)
-      const loader = new THREE.GLTFLoader();
-      const modelUrl = 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/SimpleSkin/glTF-Embedded/SimpleSkin.gltf';
-
-      // Realistic Fallback / Sculpted Mesh if GLTF model loads
-      loader.load(
-        'https://raw.githubusercontent.com/mrdoob/three.js/master/examples/models/gltf/LeePerrySmith/LeePerrySmith.glb',
-        (gltf) => {
-          document.getElementById('loadingText').style.display = 'none';
-          const mesh = gltf.scene.children[0];
-          mesh.material = mannequinMaterial;
-          mesh.scale.set(0.24, 0.24, 0.24);
-          mesh.position.set(0, -0.6, 0);
-
-          humanModel = gltf.scene;
-          scene.add(humanModel);
-          calculateAll();
-        },
-        undefined,
-        () => {
-          // Robust Fallback: Clean Anatomical Mannequin Body
-          document.getElementById('loadingText').style.display = 'none';
-          createAnatomicalMannequin();
-          calculateAll();
-        }
-      );
-
-      // Mouse/Touch 360 Spin
-      const dom = renderer.domElement;
-      dom.addEventListener('mousedown', (e) => { isDragging = true; prevMouseX = e.clientX; });
-      window.addEventListener('mouseup', () => isDragging = false);
-      dom.addEventListener('mousemove', (e) => {
-        if (!isDragging || !humanModel) return;
-        humanModel.rotation.y += (e.clientX - prevMouseX) * 0.015;
-        prevMouseX = e.clientX;
-      });
-
-      dom.addEventListener('touchstart', (e) => { isDragging = true; prevMouseX = e.touches[0].clientX; });
-      window.addEventListener('touchend', () => isDragging = false);
-      dom.addEventListener('touchmove', (e) => {
-        if (!isDragging || !humanModel) return;
-        humanModel.rotation.y += (e.touches[0].clientX - prevMouseX) * 0.015;
-        prevMouseX = e.touches[0].clientX;
-      });
-
-      animate();
-    }
-
-    function createAnatomicalMannequin() {
-      humanModel = new THREE.Group();
-
-      // Rounded Torso / Athletic V-Taper
-      const chestGeo = new THREE.CylinderGeometry(0.3, 0.22, 0.6, 32);
-      const chest = new THREE.Mesh(chestGeo, mannequinMaterial);
-      chest.position.y = 0.55;
-      chest.scale.set(1.2, 1, 0.85);
-      humanModel.add(chest);
-
-      const waistGeo = new THREE.CylinderGeometry(0.22, 0.26, 0.35, 32);
-      const waist = new THREE.Mesh(waistGeo, mannequinMaterial);
-      waist.position.y = 0.15;
-      waist.scale.set(1.05, 1, 0.8);
-      humanModel.add(waist);
-
-      // Head & Neck
-      const headGeo = new THREE.SphereGeometry(0.18, 32, 32);
-      const head = new THREE.Mesh(headGeo, mannequinMaterial);
-      head.scale.set(0.9, 1.2, 1);
-      head.position.y = 1.05;
-      humanModel.add(head);
-
-      const neckGeo = new THREE.CylinderGeometry(0.08, 0.1, 0.18, 24);
-      const neck = new THREE.Mesh(neckGeo, mannequinMaterial);
-      neck.position.y = 0.88;
-      humanModel.add(neck);
-
-      // Legs
-      [-0.14, 0.14].forEach(x => {
-        const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.07, 1.1, 24), mannequinMaterial);
-        leg.position.set(x, -0.55, 0);
-        humanModel.add(leg);
-      });
-
-      // Arms
-      [-0.42, 0.42].forEach(x => {
-        const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.05, 0.85, 24), mannequinMaterial);
-        arm.position.set(x, 0.45, 0);
-        arm.rotation.z = x > 0 ? -0.15 : 0.15;
-        humanModel.add(arm);
-      });
-
-      humanModel.position.y = 0.05;
-      scene.add(humanModel);
-    }
-
-    function animate() {
-      requestAnimationFrame(animate);
-      if (!isDragging && humanModel) {
-        humanModel.rotation.y += 0.006;
-      }
-      renderer.render(scene, camera);
-    }
-
-    function calculateAll() {
-      const hCm = parseFloat(document.getElementById('heightInput').value);
-      const wKg = parseFloat(document.getElementById('weightInput').value);
-      const age = parseFloat(document.getElementById('ageInput').value) || 18;
-      const goal = document.getElementById('goalInput').value;
-
-      if (!hCm || !wKg || hCm <= 0 || wKg <= 0) return;
-
-      const hMeter = hCm / 100;
-      const bmi = parseFloat((wKg / (hMeter * hMeter)).toFixed(1));
-      document.getElementById('bmiScoreText').innerText = bmi;
-
-      const statusEl = document.getElementById('bmiStatusText');
-      let themeColor = 0x38bdf8;
-      let bulk = 0.8;
-
-      if (bmi < 18.5) {
-        statusEl.innerText = "Underweight";
-        statusEl.style.color = "#38bdf8";
-        themeColor = 0x38bdf8;
-        bulk = 0.78;
-      } else if (bmi >= 18.5 && bmi <= 24.9) {
-        statusEl.innerText = "Normal Weight";
-        statusEl.style.color = "#10b981";
-        themeColor = 0x10b981;
-        bulk = 1.0;
-      } else if (bmi >= 25 && bmi <= 29.9) {
-        statusEl.innerText = "Overweight";
-        statusEl.style.color = "#f59e0b";
-        themeColor = 0xf59e0b;
-        bulk = 1.35;
-      } else {
-        statusEl.innerText = "Obese";
-        statusEl.style.color = "#ef4444";
-        themeColor = 0xef4444;
-        bulk = 1.6;
-      }
-
-      // Calories & Protein
-      let bmr = (10 * wKg) + (6.25 * hCm) - (5 * age) + 5;
-      let targetCal = Math.round(bmr * 1.35);
-      if (goal === 'gain') targetCal += 450;
-      if (goal === 'lose') targetCal -= 450;
-      document.getElementById('calScore').innerText = targetCal;
-
-      let proMult = 1.6;
-      if (goal === 'gain') proMult = 2.0;
-      if (goal === 'lose') proMult = 1.8;
-      document.getElementById('proScore').innerText = Math.round(wKg * proMult) + "g";
-
-      // Smooth Morphing
-      if (humanModel) {
-        mannequinMaterial.color.setHex(themeColor);
-        const heightScale = Math.max(0.75, Math.min(1.25, hCm / 175));
-        humanModel.scale.y = heightScale;
-        humanModel.scale.x = bulk;
-        humanModel.scale.z = bulk * 0.9;
-      }
-    }
-
-    window.onload = () => {
-      init3D();
-      calculateAll();
-    };
-
-    window.onresize = () => {
-      const container = document.getElementById('threeCanvas');
-      if (!renderer || !container) return;
-      const w = container.clientWidth;
-      const h = container.clientHeight;
-      camera.aspect = w / h;
-      camera.updateProjectionMatrix();
-      renderer.setSize(w, h);
-    };
-  </script>
-</body>
-            </html>
+# coding=utf-8  
+#!/usr/bin/env python3  
   
+from libs.check_modules import check_modules  
+from sys import exit  
+from os import _exit  
+  
+check_modules()  
+  
+from os import path  
+  
+from libs.logo import print_logo  
+from libs.utils import print_success  
+from libs.utils import print_error  
+from libs.utils import ask_question  
+from libs.utils import print_status  
+from libs.utils import parse_proxy_file  
+from libs.proxy_harvester import find_proxies  
+from libs.attack import report_profile_attack  
+from libs.attack import report_video_attack  
+  
+from multiprocessing import Process  
+from colorama import Fore, Back, Style  
+  
+def chunks(lst, n):  
+    """Yield successive n-sized chunks from lst."""  
+    for i in range(0, len(lst), n):  
+        yield lst[i:i + n]  
+  
+def profile_attack_process(username, proxy_list):  
+    if (len(proxy_list) == 0):  
+        for _ in range(10):  
+            report_profile_attack(username, None)  
+        return  
+  
+    for proxy in proxy_list:  
+        report_profile_attack(username, proxy)  
+  
+def video_attack_process(video_url, proxy_list):  
+    if (len(proxy_list) == 0):  
+        for _ in range(10):  
+            report_video_attack(video_url, None)  
+        return  
+  
+    for proxy in proxy_list:  
+        report_video_attack(video_url, proxy)  
+  
+def video_attack(proxies):  
+    video_url = ask_question("Enter the link of the video you want to report")  
+    print(Style.RESET_ALL)  
+    if (len(proxies) == 0):  
+        for k in range(5):  
+            p = Process(target=video_attack_process, args=(video_url, [],))  
+            p.start()  
+            print_status(str(k + 1) + ". Transaction Opened!")  
+            if (i == 5): print()  
+        return  
+  
+    chunk = list(chunks(proxies, 10))  
+  
+    print("")  
+    print_status("Video complaint attack is starting!\\n")  
+  
+    i = 1  
+    for proxy_list in chunk:  
+        p = Process(target=video_attack_process, args=(video_url, proxy_list,))  
+        p.start()  
+        print_status(str(i) + ". Transaction Opened!")  
+        if (i == 5): print()  
+        i = i + 1  
+  
+def profile_attack(proxies):  
+    username = ask_question("Enter the username of the person you want to report")  
+    print(Style.RESET_ALL)  
+    if (len(proxies) == 0):  
+        for k in range(5):  
+            p = Process(target=profile_attack_process, args=(username, [],))  
+            p.start()  
+            print_status(str(k + 1) + ". Transaction Opened!")  
+        return  
+  
+    chunk = list(chunks(proxies, 10))  
+  
+    print("")  
+    print_status("Profile complaint attack is starting!\\n")  
+  
+    i = 1  
+    for proxy_list in chunk:  
+        p = Process(target=profile_attack_process, args=(username, proxy_list,))  
+        p.start()  
+        print_status(str(i) + ". Transaction Opened!")  
+        if (i == 5): print()  
+        i = i + 1  
+  
+def main():  
+    print_success("Modules loaded!\\n")  
+  
+    ret = ask_question("Would you like to use a proxy? [Y/N]")  
+  
+    proxies = []  
+  
+    if (ret == "Y" or ret == "y"):  
+        ret = ask_question("Would you like to collect your proxies from the internet? [Y/N]")  
+  
+        if (ret == "Y" or ret == "y"):  
+            print_status("Gathering proxy from the Internet! This may take a while.\\n")  
+            proxies = find_proxies()  
+        elif (ret == "N" or ret == "n"):  
+            print_status("Please have a maximum of 50 proxies in a file!")  
+            file_path = ask_question("Enter the path to your proxy list")  
+            proxies = parse_proxy_file(file_path)  
+        else:  
+            print_error("Answer not understood, exiting!")  
+            exit()  
+  
+        print_success(str(len(proxies)) + " Number of proxies found!\\n")  
+    elif (ret == "N" or ret == "n"):  
+        pass  
+    else:  
+        print_error("Answer not understood, exiting!")  
+        exit()  
+  
+      
+  
+    print("")  
+    print_status("1 - Report the profile.")  
+    print_status("2 - Report a video.")  
+    report_choice = ask_question("Please select the complaint method")  
+    print("")  
+  
+    if (report_choice.isdigit() == False):  
+        print_error("The answer is not understood.")  
+        exit(0)  
+      
+    if (int(report_choice) > 2 or int(report_choice) == 0):  
+        print_error("The answer is not understood..")  
+        exit(0)  
+  
+    if (int(report_choice) == 1):  
+        profile_attack(proxies)  
+    elif (int(report_choice) == 2):  
+        video_attack(proxies)  
+  
+if __name__ == "__main__":  
+    print_logo()  
+    try:  
+        main()  
+        print(Style.RESET_ALL)  
+    except KeyboardInterrupt:  
+        print("\\n\\n" + Fore.RED + "[ * ] The program is closing!")  
+        print(Style.RESET_ALL)  
+        _exit(0)
