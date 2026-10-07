@@ -10,16 +10,18 @@ from telegram.ext import (
     filters
 )
 
-# Configuration
+# ================= CONFIGURATION =================
 BOT_TOKEN = "8720521721:AAECw3a-sWSqLGbOH3ODjuWFGGTdIZ3lPu8"
 DRIVE_LINK = "https://drive.google.com/drive/u/0/mobile/folders/1unpmYt_y8O8anjPu_n3BlOENXCu3ayw-"
 UPI_ID = "8178152316@fam"
 SUPPORT_USERNAME = "Akira_verse"
 
+# Fraud Prevention Track
 used_utrs = set()
 
-# 3D Ghost Glitch VFX
-GHOST_VFX_GIF = "https://media.giphy.com/media/Y4v7Yg5Isuh0eXkO7b/giphy.gif"
+# Media Elements: 3D Scary Ghost Glitch & Phonk Audio Track
+GHOST_SCARE_GIF = "https://media.giphy.com/media/Y4v7Yg5Isuh0eXkO7b/giphy.gif"
+PHONK_TRACK_URL = "https://cdn.pixabay.com/download/audio/2023/06/13/audio_49c3b87a8b.mp3?filename=brazilian-phonk-153372.mp3"
 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
@@ -34,11 +36,12 @@ def get_main_menu():
             InlineKeyboardButton("📷 Scan 3D QR", callback_data="show_qr")
         ],
         [
-            InlineKeyboardButton("📂 Vault Categories", callback_data="categories"),
-            InlineKeyboardButton("⚙️ How It Works", callback_data="how_it_works")
+            InlineKeyboardButton("🎧 Play Phonk Vibe", callback_data="play_phonk"),
+            InlineKeyboardButton("📂 Vault Categories", callback_data="categories")
         ],
         [
-            InlineKeyboardButton("💀 Akira Verse Support", callback_data="support")
+            InlineKeyboardButton("⚙️ How It Works", callback_data="how_it_works"),
+            InlineKeyboardButton("💀 Akira Support", callback_data="support")
         ]
     ]
     return InlineKeyboardMarkup(keyboard)
@@ -46,26 +49,42 @@ def get_main_menu():
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     name = user.first_name if user else "Warrior"
+    chat_id = update.effective_chat.id
 
+    # 1. Send 3D Ghost Scare Jump Animation
     try:
         await context.bot.send_animation(
-            chat_id=update.effective_chat.id,
-            animation=GHOST_VFX_GIF,
-            caption="⚡ *AKIRA VERSE VAULT SYSTEM ACTIVATED* ⚡",
+            chat_id=chat_id,
+            animation=GHOST_SCARE_GIF,
+            caption="⚠️ *CRITICAL WARNING: AKIRA VERSE SYSTEM ACTIVATED* ⚠️",
             parse_mode="Markdown"
         )
     except Exception as e:
-        logging.error(f"Media error: {e}")
+        logging.error(f"GIF error: {e}")
 
+    # 2. Drop Phonk Track in Chat
+    try:
+        await context.bot.send_audio(
+            chat_id=chat_id,
+            audio=PHONK_TRACK_URL,
+            title="Akira Drift Phonk (Montagem)",
+            performer="Akira Verse Audio",
+            caption="🎧 *NOW PLAYING: AKIRA BASS DROP* 💀"
+        )
+    except Exception as e:
+        logging.error(f"Audio error: {e}")
+
+    # 3. Main Welcome Interface
     welcome_text = (
-        f"🔥 *WELCOME {name.upper()} | 150,000+ ULTRA HD REELS*\n\n"
-        "⚡ *Quality:* 1080p 60FPS | Watermark-Free | Ready-to-Post\n"
-        "💎 *Limited Drop:* ~~₹499~~ **₹29 Only** (Lifetime Drive Access)\n\n"
-        "Niche buttons se Categories check karo ya direct access lo!"
+        f"👁️ *WELCOME TO THE SHADOWS, {name.upper()}...*\n\n"
+        "🔥 *150,000+ ULTRA HD REELS BUNDLE* (No Watermark)\n"
+        "⚡ *Format:* 1080p 60FPS | AI, Sigma, Phonk, Supercars & Luxury\n\n"
+        "💎 *Limited Drop Deal:* ~~₹499~~ **₹29 Only** (Lifetime Drive Access)\n\n"
+        "Niche diye buttons se Instant QR Scan karein ya UPI se pay karein!"
     )
 
     await context.bot.send_message(
-        chat_id=update.effective_chat.id,
+        chat_id=chat_id,
         text=welcome_text,
         parse_mode="Markdown",
         reply_markup=get_main_menu()
@@ -84,10 +103,21 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "📷 *INSTANT SCAN & PAY ₹29*\n\n"
             f"• UPI ID: `{UPI_ID}`\n"
             "• Amount: *₹29*\n\n"
-            "Pay karne ke baad *12-digit UTR No.* chat me paste karo."
+            "Payment complete hone ke baad transaction ka *12-digit UTR / Ref No.* yahan send karo."
         )
         back_markup = InlineKeyboardMarkup([[InlineKeyboardButton("⬅️ Back to Menu", callback_data="home")]])
         await query.message.reply_photo(photo=qr_url, caption=qr_caption, parse_mode="Markdown", reply_markup=back_markup)
+
+    elif query.data == "play_phonk":
+        try:
+            await query.message.reply_audio(
+                audio=PHONK_TRACK_URL,
+                title="Akira Verse Phonk",
+                performer="Akira Beats",
+                caption="🔊 *Turn up the volume!*"
+            )
+        except Exception as e:
+            await query.message.reply_text("Audio buffering error...")
 
     elif query.data == "categories":
         cat_text = (
@@ -115,8 +145,8 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif query.data == "support":
         supp_text = (
             "💀 *AKIRA VERSE SUPPORT*\n\n"
-            f"Admin: @{SUPPORT_USERNAME}\n"
-            "Active Hours: Instant Reply"
+            f"👤 Admin: @{SUPPORT_USERNAME}\n"
+            "⚡ Active Status: Instant Reply"
         )
         back_markup = InlineKeyboardMarkup([[InlineKeyboardButton("⬅️ Back to Menu", callback_data="home")]])
         await query.message.edit_text(supp_text, parse_mode="Markdown", reply_markup=back_markup)
@@ -166,6 +196,6 @@ if __name__ == "__main__":
     app.add_handler(CallbackQueryHandler(button_handler))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_utr))
 
-    print("Akira Verse Bot is running...")
+    print("Akira Verse Bot is live with 3D VFX & Phonk Audio...")
     app.run_polling()
-    
+        
