@@ -10,6 +10,7 @@ from telegram.ext import (
     filters
 )
 
+# Configuration
 BOT_TOKEN = "8720521721:AAECw3a-sWSqLGbOH3ODjuWFGGTdIZ3lPu8"
 DRIVE_LINK = "https://drive.google.com/drive/u/0/mobile/folders/1unpmYt_y8O8anjPu_n3BlOENXCu3ayw-"
 UPI_ID = "8178152316@fam"
@@ -17,8 +18,7 @@ SUPPORT_USERNAME = "Akira_verse"
 
 used_utrs = set()
 
-# 3D Ghost Hyper-Realistic Banner & Glitch VFX
-GHOST_3D_POSTER = "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=1000&q=80"
+# 3D Ghost Glitch VFX
 GHOST_VFX_GIF = "https://media.giphy.com/media/Y4v7Yg5Isuh0eXkO7b/giphy.gif"
 
 logging.basicConfig(
@@ -47,7 +47,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     name = user.first_name if user else "Warrior"
 
-    # Send 3D Glitch VFX first
     try:
         await context.bot.send_animation(
             chat_id=update.effective_chat.id,
@@ -71,4 +70,102 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         parse_mode="Markdown",
         reply_markup=get_main_menu()
     )
-  
+
+async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+
+    if query.data == "show_qr":
+        upi_string = f"upi://pay?pa={UPI_ID}&pn=AkiraStore&am=29&cu=INR&tn=150kReelsBundle"
+        encoded_upi = urllib.parse.quote(upi_string)
+        qr_url = f"https://api.qrserver.com/v1/create-qr-code/?size=350x350&data={encoded_upi}"
+
+        qr_caption = (
+            "📷 *INSTANT SCAN & PAY ₹29*\n\n"
+            f"• UPI ID: `{UPI_ID}`\n"
+            "• Amount: *₹29*\n\n"
+            "Pay karne ke baad *12-digit UTR No.* chat me paste karo."
+        )
+        back_markup = InlineKeyboardMarkup([[InlineKeyboardButton("⬅️ Back to Menu", callback_data="home")]])
+        await query.message.reply_photo(photo=qr_url, caption=qr_caption, parse_mode="Markdown", reply_markup=back_markup)
+
+    elif query.data == "categories":
+        cat_text = (
+            "📁 *150K+ VAULT CATEGORIES:*\n\n"
+            "• 🧠 *AI Cyber & Futuristic Tech*\n"
+            "• 🏎️ *Supercars, Mansions & Luxury*\n"
+            "• 💀 *Hard Phonk & Gym Motivation*\n"
+            "• 📈 *Crypto, Money & Millionaire Mindset*\n"
+            "• 🎌 *Anime 4K Edits & Aesthetics*\n\n"
+            "⚡ Sabhi videos bina kisi watermark ke ready hain."
+        )
+        back_markup = InlineKeyboardMarkup([[InlineKeyboardButton("⬅️ Back to Menu", callback_data="home")]])
+        await query.message.edit_text(cat_text, parse_mode="Markdown", reply_markup=back_markup)
+
+    elif query.data == "how_it_works":
+        steps_text = (
+            "⚙️ *HOW TO GET ACCESS:*\n\n"
+            "1. 'Pay ₹29' dabao ya QR scan karke ₹29 bhejo.\n"
+            "2. Payment receipt ka *12-digit UTR* copy karo.\n"
+            "3. UTR chat me send karte hi bot Drive unlock kar dega."
+        )
+        back_markup = InlineKeyboardMarkup([[InlineKeyboardButton("⬅️ Back to Menu", callback_data="home")]])
+        await query.message.edit_text(steps_text, parse_mode="Markdown", reply_markup=back_markup)
+
+    elif query.data == "support":
+        supp_text = (
+            "💀 *AKIRA VERSE SUPPORT*\n\n"
+            f"Admin: @{SUPPORT_USERNAME}\n"
+            "Active Hours: Instant Reply"
+        )
+        back_markup = InlineKeyboardMarkup([[InlineKeyboardButton("⬅️ Back to Menu", callback_data="home")]])
+        await query.message.edit_text(supp_text, parse_mode="Markdown", reply_markup=back_markup)
+
+    elif query.data == "home":
+        await query.message.edit_text(
+            "🔥 *150,000+ ULTRA HD REELS BUNDLE*\n"
+            "💰 *Deal:* ₹29 Only (Lifetime Access)\n\n"
+            "Niche diye buttons se options select karein:",
+            parse_mode="Markdown",
+            reply_markup=get_main_menu()
+        )
+
+async def handle_utr(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    text = update.message.text.strip()
+
+    if len(text) == 12 and text.isdigit():
+        if text in used_utrs:
+            await update.message.reply_markdown(
+                "❌ *ACCESS DENIED!*\n"
+                "Yeh UTR number already claim ho chuka hai. Fake entry block kar di gayi hai."
+            )
+            return
+
+        used_utrs.add(text)
+
+        success_msg = (
+            "⚡ *PAYMENT VERIFIED | VAULT UNLOCKED!* ⚡\n\n"
+            f"Txn Ref: `{text}`\n"
+            "Aapka 150,000+ Reels Bundle ready hai:\n\n"
+            f"🔗 *Google Drive Link:* [CLICK HERE TO ACCESS]({DRIVE_LINK})\n\n"
+            f"Support: @{SUPPORT_USERNAME}"
+        )
+        await update.message.reply_markdown(success_msg, disable_web_page_preview=True)
+
+    else:
+        await update.message.reply_markdown(
+            "⚠️ *INVALID UTR FORMAT!*\n\n"
+            "Kripya sirf valid *12-digit UPI UTR number* bhejein jo payment receipt par hota hai."
+        )
+
+if __name__ == "__main__":
+    app = ApplicationBuilder().token(BOT_TOKEN).build()
+
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(CommandHandler("buy", start))
+    app.add_handler(CallbackQueryHandler(button_handler))
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_utr))
+
+    print("Akira Verse Bot is running...")
+    app.run_polling()
+    
